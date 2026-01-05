@@ -42,6 +42,7 @@ def get_random_user_agent():
 
 def get_browser_driver(browser_type, download_path=None):
     user_agent = get_random_user_agent()
+    abs_download_path = os.path.abspath(download_path) if download_path else os.path.abspath(os.getcwd())   
     if browser_type == 'firefox':
         options = FirefoxOptions()
         options.add_argument("--headless")
@@ -50,9 +51,10 @@ def get_browser_driver(browser_type, download_path=None):
         options.set_preference("general.useragent.override", user_agent)
         if download_path:
             options.set_preference("browser.download.folderList", 2)
-            options.set_preference("browser.download.dir", download_path)
+            options.set_preference("browser.download.dir", abs_download_path)
             options.set_preference("browser.download.useDownloadDir", True)
-            options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/x-snes-rom")
+            options.set_preference("browser.download.manager.showWhenStarting", False)
+            options.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/x-snes-rom,application/octet-stream")
         return webdriver.Firefox(options=options)
     else:
         options = ChromeOptions()
@@ -62,9 +64,13 @@ def get_browser_driver(browser_type, download_path=None):
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--window-size=1920,1080")
         options.add_argument(f"user-agent={user_agent}")
-        if download_path:
-            prefs = {"download.default_directory": download_path}
-            options.add_experimental_option("prefs", prefs)
+        prefs = {
+            "download.default_directory": abs_download_path,
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            "safebrowsing.enabled": False
+        }
+        options.add_experimental_option("prefs", prefs)
         return webdriver.Chrome(options=options)
 
 samus_sprites = [
